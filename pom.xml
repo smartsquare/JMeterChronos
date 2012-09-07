@@ -1,0 +1,96 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>de.smartsquare</groupId>
+	<artifactId>jmeter-tests</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Automated JMeter Tests</name>
+	<description>This is a sample project showing the usage of JMeter, Maven and Chronos to automate JMeter tests in a CI environment.</description>
+
+	<properties>
+		<failsafe.version>2.12.3</failsafe.version>
+		<chronos.version>1.1.0</chronos.version>
+	</properties>
+
+	<build>
+		<plugins>
+			<!-- =========================================== -->
+			<!-- Failsafe plugin needed to hook in phases pre- and post-integration-test -->
+			<!-- =========================================== -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>${failsafe.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- =========================================== -->
+			<!-- Run JMeter tests on goal "integration-test" -->
+			<!-- =========================================== -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>chronos-jmeter-maven-plugin</artifactId>
+				<version>${chronos.version}</version>
+				<configuration>
+					<jmeterhome>${env.JMETER_HOME}</jmeterhome>
+					<!-- The testplan.jmx does not exist yet; it can be created using the jmeter gui -->
+					<input>${basedir}/src/test/resources/jmeter/testplan.jmx</input>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>jmeter</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.gmaven</groupId>
+				<artifactId>gmaven-plugin</artifactId>
+				<version>${gmaven.version}</version>
+				<executions>
+					<!-- =========================================== -->
+					<!-- Setup environment in phase "pre-integration-test" -->
+					<!-- =========================================== -->
+					<execution>
+						<id>setup-environment</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<source>
+								${basedir}/src/test/scripts/Setup.groovy
+							</source>
+						</configuration>
+					</execution>
+
+					<!-- =========================================== -->
+					<!-- Check logs in phase "post-integration-test" -->
+					<!-- =========================================== -->
+					<execution>
+						<id>check-log-file</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<source>
+								${basedir}/src/test/scripts/CheckLogs.groovy
+							</source>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
